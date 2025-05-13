@@ -1,4 +1,23 @@
-const placeholderCoefs = [3, 3, 2, 4, 3, 1, 2, 2];
+const courseCoefficients = {
+  Algorithmique: 3,
+  "Bases de données": 3,
+  "Gestion de Bases de Données": 2,
+  Communication: 2,
+  "Programmation Java": 4,
+  UML: 3,
+  GIT: 1,
+  scripting: 2,
+  "Technologies Web": 2,
+  "Fondements des réseaux": 3,
+  "Projet d'Intégration Java/mobile": 6,
+  "Calcul scientifique": 2,
+  "Analyse numérique": 3,
+  "Projet programmation procédurale": 2,
+};
+
+// Default fallback coefficient
+const defaultCoef = 1;
+
 const defaultNoteCoefs = {
   exam_cc: { exam: 0.6, cc: 0.4 },
   exam_tp: { exam: 0.8, tp: 0.2 },
@@ -6,7 +25,6 @@ const defaultNoteCoefs = {
 };
 
 let currentData = [];
-
 function tableToJson(table) {
   const data = [];
 
@@ -29,7 +47,27 @@ function tableToJson(table) {
     let coef = parseFloat(cells[5]?.textContent.trim());
 
     if (isNaN(coef)) {
-      coef = placeholderCoefs[i - 1] || 1;
+      // Try exact match first
+      if (courseCoefficients[designation] !== undefined) {
+        coef = courseCoefficients[designation];
+      } else {
+        // If no exact match, try partial match with longest match first
+        coef = defaultCoef; // Default value
+        let bestMatchLength = 0;
+
+        for (const [courseName, coefficient] of Object.entries(
+          courseCoefficients
+        )) {
+          // Check if courseName is contained in designation
+          if (designation.toLowerCase().includes(courseName.toLowerCase())) {
+            // Only update if this match is longer than previous matches
+            if (courseName.length > bestMatchLength) {
+              coef = coefficient;
+              bestMatchLength = courseName.length;
+            }
+          }
+        }
+      }
     }
 
     data.push({
@@ -145,7 +183,7 @@ function populateTable(data) {
       };color:white">${x.moyenne.toFixed(2)}</td>`;
       html += `<td></td><td></td><td></td>`;
     } else {
-      const placeholder = placeholderCoefs[i] || "";
+      const placeholder = courseCoefficients[x.designation] || defaultCoef;
       html += `<td contenteditable="true" data-type="coef" data-index="${i}" style="background-color:#f7f7f7" title="Placeholder: ${placeholder}">${x.coef}</td>`;
       html += `<td style="background-color:${
         x.moyenne >= 8 ? "green" : "red"
